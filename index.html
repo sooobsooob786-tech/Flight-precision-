@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پرسیس پرواز | رزرو بلیط هواپیما</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Montserrat:wght@400;600;700&family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* Custom Fonts */
+        .font-lalezar { font-family: 'Lalezar', cursive; }
+        .font-vazir { font-family: 'Vazirmatn', sans-serif; }
+        .font-montserrat { font-family: 'Montserrat', sans-serif; }
+
+        /* Glassmorphism */
+        .glass-morphism {
+            background: rgba(20, 20, 30, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Gradient Button */
+        .btn-gradient {
+            background: linear-gradient(135deg, #f97316 0%, #db2777 50%, #7c3aed 100%);
+            background-size: 200% auto;
+            transition: 0.5s;
+        }
+        .btn-gradient:hover {
+            background-position: right center;
+            box-shadow: 0 0 20px rgba(219, 39, 119, 0.6);
+        }
+
+        /* Intro Animation Styles */
+        #intro-screen {
+            background: linear-gradient(to bottom, #0f172a 0%, #1e1b4b 100%);
+        }
+
+        .fly-plane-container {
+            position: absolute;
+            animation: smooth-takeoff 3.5s cubic-bezier(0.45, 0, 0.55, 1) forwards;
+            will-change: transform;
+        }
+
+        @keyframes smooth-takeoff {
+            0% { transform: translate(-120vw, 40vh) scale(0.6) rotate(10deg); opacity: 0; }
+            15% { opacity: 1; }
+            100% { transform: translate(120vw, -40vh) scale(1.4) rotate(-5deg); opacity: 1; }
+        }
+
+        .speed-cloud {
+            position: absolute;
+            background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.08));
+            border-radius: 100px;
+            filter: blur(8px);
+            animation: cloud-pass 2s linear infinite;
+        }
+
+        @keyframes cloud-pass {
+            from { transform: translateX(110vw); }
+            to { transform: translateX(-50vw); }
+        }
+
+        /* Globe Animation */
+        .globe-container {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #4c1d95, #000);
+            box-shadow: 0 0 60px -10px rgba(139, 92, 246, 0.6), inset 0 0 50px rgba(0,0,0,0.8);
+            position: relative;
+            overflow: hidden;
+            animation: pulse-globe 4s infinite ease-in-out;
+        }
+
+        .map-texture {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 600px;
+            height: 100%;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/World_map_-_low_resolution.svg/2000px-World_map_-_low_resolution.svg.png');
+            background-size: cover;
+            opacity: 0.4;
+            filter: sepia(100%) hue-rotate(220deg) saturate(300%);
+            animation: spin-map 6s linear infinite;
+        }
+
+        @keyframes spin-map {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        @keyframes fly-over-globe {
+            0% { left: 0; top: 0; opacity: 0; transform: scale(0.5); }
+            20% { opacity: 1; transform: scale(1); }
+            80% { opacity: 1; transform: scale(1); }
+            100% { left: 100%; top: 20px; opacity: 0; transform: scale(0.5); }
+        }
+
+        /* Utilities */
+        .hide { display: none !important; }
+        .show { display: block !important; }
+        .fade-in { animation: fadeIn 1s forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Particle for Home */
+        .particle {
+          position: absolute;
+          width: 4px;
+          height: 4px;
+          background: rgba(255,255,255,0.5);
+          border-radius: 50%;
+          animation: rise 10s infinite ease-in;
+        }
+        @keyframes rise {
+          0% { bottom: -10px; transform: translateX(0); opacity: 0; }
+          50% { opacity: 1; }
+          100% { bottom: 100%; transform: translateX(-20px); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-800 font-vazir overflow-x-hidden">
+
+    <!-- 1. INTRO SCREEN -->
+    <div id="intro-screen" class="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden">
+        <!-- Clouds JS generated -->
+        <div id="clouds-container" class="absolute inset-0 w-full h-full"></div>
+        
+        <!-- Plane -->
+        <div class="fly-plane-container relative z-10 text-white">
+            <div class="relative">
+                <i data-lucide="plane" width="140" height="140" stroke-width="1" class="text-slate-200 drop-shadow-2xl fill-white"></i>
+                <!-- Engine Glow -->
+                <div class="absolute top-[65%] right-[20%] w-8 h-8 bg-orange-500 rounded-full blur-md opacity-60"></div>
+                <!-- Trails -->
+                <div class="absolute top-[70px] right-[90%] w-[300px] h-2 bg-gradient-to-r from-transparent via-white/20 to-white/60 blur-sm transform -skew-x-12 origin-right"></div>
+                <div class="absolute top-[90px] right-[90%] w-[300px] h-2 bg-gradient-to-r from-transparent via-white/20 to-white/60 blur-sm transform -skew-x-12 origin-right"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. GLOBE OVERLAY (Hidden by default) -->
+    <div id="globe-overlay" class="fixed inset-0 z-[90] bg-indigo-950 flex flex-col items-center justify-center font-vazir hide">
+        <div class="text-center mb-10 animate-pulse">
+            <h2 class="text-3xl text-white font-lalezar mb-2">در حال جستجوی بهترین پروازها...</h2>
+            <div class="flex items-center justify-center gap-4 text-pink-300 text-xl" dir="rtl">
+               <span id="globe-origin">مبدا</span>
+               <i data-lucide="arrow-left"></i>
+               <span id="globe-dest">مقصد</span>
+            </div>
+        </div>
+        <div class="globe-container">
+            <div class="map-texture"></div>
+            <div class="absolute inset-0 bg-gradient-to-tr from-black/60 to-transparent rounded-full"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                 <div class="relative w-64 h-32 border-t-2 border-white/20 rounded-[50%] rotate-[-15deg]">
+                    <div class="absolute -top-3 left-0 w-full h-full" style="animation: fly-over-globe 2s linear infinite;">
+                       <i data-lucide="plane" class="text-orange-400 rotate-180 fill-current"></i>
+                    </div>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. MAIN APP CONTENT (Hidden until intro done) -->
+    <div id="app-content" class="opacity-0 transition-opacity duration-1000">
+        
+        <!-- Navbar -->
+        <nav class="absolute top-0 w-full z-40 px-6 py-6 flex justify-between items-center text-white">
+            <div class="flex items-center gap-3 glass-morphism px-4 py-2 rounded-2xl border-white/10">
+                <div class="w-12 h-12 bg-gradient-to-tr from-orange-400 to-pink-600 rounded-xl flex items-center justify-center shadow-lg transform rotate-3">
+                    <i data-lucide="plane" class="text-white transform -rotate-3"></i>
+                </div>
+                <div class="flex flex-col">
+                    <h1 class="text-2xl font-lalezar tracking-wide drop-shadow-md text-white">
+                        پرسیس پرواز <span class="text-sm align-middle opacity-90 text-orange-200 font-vazir">با مدیریت زابد رسولی</span>
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex items-center gap-1 font-vazir font-medium glass-morphism px-2 py-2 rounded-full shadow-2xl">
+                <a href="#" class="px-6 py-2 rounded-full hover:bg-white/10 transition-colors">خانه</a>
+                <a href="#" class="px-6 py-2 rounded-full hover:bg-white/10 transition-colors">بلیط هواپیما</a>
+                <a href="#" class="px-6 py-2 rounded-full hover:bg-white/10 transition-colors">تورهای خارجی</a>
+                <a href="#" class="px-6 py-2 rounded-full hover:bg-white/10 transition-colors">تماس با ما</a>
+            </div>
+
+            <div class="hidden md:flex items-center gap-4">
+                <button class="text-white font-vazir hover:text-orange-300 transition shadow-black drop-shadow-md">ورود</button>
+                <button class="btn-gradient text-white px-6 py-2 rounded-full font-lalezar shadow-lg hover:shadow-white/20 border border-white/20">ثبت نام</button>
+            </div>
+            
+             <!-- Mobile Menu Button -->
+             <button class="md:hidden text-white bg-white/20 p-2 rounded-lg" onclick="alert('منوی موبایل')">
+                <i data-lucide="menu"></i>
+            </button>
+        </nav>
+
+        <!-- Hero Section -->
+        <header id="hero-section" class="relative w-full h-screen flex items-center justify-center overflow-hidden">
+            <!-- Video Background -->
+            <div class="absolute inset-0 z-0">
+                <div class="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-purple-900/40 to-slate-950 z-10"></div>
+                <video autoplay loop muted playsinline class="w-full h-full object-cover scale-105">
+                    <source src="https://cdn.coverr.co/videos/coverr-flying-above-clouds-5323/1080p.mp4" type="video/mp4">
+                </video>
+                <!-- Particles -->
+                <div id="particles-container" class="absolute inset-0 z-10 pointer-events-none"></div>
+            </div>
+
+            <!-- Search Widget -->
+            <div class="relative z-20 container mx-auto px-4 flex flex-col items-center justify-center h-full pt-20">
+                <div class="w-full max-w-6xl glass-morphism rounded-[2.5rem] p-6 md:p-10 shadow-2xl border border-white/20 backdrop-blur-xl">
+                    <!-- Tabs -->
+                    <div class="flex justify-center md:justify-start gap-4 mb-8">
+                        <button class="flex items-center gap-2 px-6 py-3 rounded-2xl font-lalezar text-xl bg-white text-indigo-900 shadow-lg scale-105 transition-all">
+                            <i data-lucide="plane"></i> پرواز
+                        </button>
+                        <button class="flex items-center gap-2 px-6 py-3 rounded-2xl font-lalezar text-xl text-white hover:bg-white/10 transition-all">
+                            <i data-lucide="calendar"></i> هتل
+                        </button>
+                    </div>
+
+                    <!-- Form -->
+                    <form onsubmit="startSearch(event)" class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end relative">
+                        <!-- Origin -->
+                        <div class="md:col-span-3 relative group">
+                            <label class="block text-indigo-100 text-sm mb-2 font-bold">مبدا (از کجا؟)</label>
+                            <div class="relative flex items-center bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl transition-all">
+                                <i data-lucide="map-pin" class="text-orange-400 absolute right-3"></i>
+                                <input type="text" id="input-origin" placeholder="تهران (THR)" class="bg-transparent w-full py-4 pr-12 pl-4 outline-none text-white placeholder-white/50 text-lg rounded-2xl" required>
+                            </div>
+                        </div>
+
+                        <!-- Swap Button -->
+                        <div class="hidden md:flex justify-center items-center pb-4 -ml-2 -mr-2 z-10">
+                            <button type="button" class="bg-white/10 hover:bg-white/30 p-2 rounded-full border border-white/20 text-white">
+                                <i data-lucide="arrow-left-right"></i>
+                            </button>
+                        </div>
+
+                        <!-- Destination -->
+                        <div class="md:col-span-3 relative group">
+                            <label class="block text-indigo-100 text-sm mb-2 font-bold">مقصد (به کجا؟)</label>
+                            <div class="relative flex items-center bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl transition-all">
+                                <i data-lucide="globe" class="text-pink-400 absolute right-3"></i>
+                                <input type="text" id="input-dest" placeholder="استانبول (IST)" class="bg-transparent w-full py-4 pr-12 pl-4 outline-none text-white placeholder-white/50 text-lg rounded-2xl" required>
+                            </div>
+                        </div>
+
+                        <!-- Date -->
+                        <div class="md:col-span-2 relative group">
+                            <label class="block text-indigo-100 text-sm mb-2 font-bold">تاریخ</label>
+                            <div class="relative flex items-center bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl transition-all">
+                                <i data-lucide="calendar" class="text-purple-400 absolute right-3"></i>
+                                <input type="text" placeholder="1403/--" class="bg-transparent w-full py-4 pr-12 pl-4 outline-none text-white placeholder-white/50 text-lg rounded-2xl font-montserrat">
+                            </div>
+                        </div>
+
+                         <!-- Class -->
+                         <div class="md:col-span-2 relative group">
+                            <label class="block text-indigo-100 text-sm mb-2 font-bold">کلاس</label>
+                            <div class="relative flex items-center bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl transition-all h-[62px]">
+                                <i data-lucide="star" class="text-yellow-400 absolute right-3"></i>
+                                <span class="pr-12 text-white">اکونومی</span>
+                                <i data-lucide="chevron-down" class="text-white absolute left-3"></i>
+                            </div>
+                        </div>
+
+                        <!-- Search Button -->
+                        <div class="md:col-span-2">
+                            <button type="submit" class="w-full btn-gradient h-[62px] text-white rounded-2xl font-lalezar text-xl flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(249,115,22,0.4)] hover:scale-105 transition-all">
+                                جستجو <i data-lucide="search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </header>
+
+        <!-- Search Results (Hidden initially) -->
+        <main id="results-section" class="container mx-auto px-4 py-16 hide">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl md:text-5xl font-lalezar text-white drop-shadow-lg">
+                   <span class="text-orange-500">نتایج پرواز</span> <span id="res-origin"></span> به <span id="res-dest"></span>
+                </h2>
+                <button onclick="resetSearch()" class="flex items-center gap-2 text-gray-400 hover:text-white font-vazir transition-colors bg-white/5 px-4 py-2 rounded-xl border border-white/10">
+                  <i data-lucide="arrow-right"></i> جستجوی مجدد
+                </button>
+            </div>
+
+            <!-- Result Cards -->
+            <div class="space-y-4">
+                <!-- Card 1 -->
+                <div class="bg-slate-800/80 backdrop-blur-md border border-white/10 rounded-3xl p-6 text-white hover:border-orange-500/50 transition-all shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div class="flex items-center gap-6">
+                       <div class="w-16 h-16 bg-white rounded-full p-2 flex items-center justify-center">
+                           <i data-lucide="plane" class="text-slate-900"></i>
+                       </div>
+                       <div>
+                           <h3 class="text-xl font-lalezar">هواپیمایی ماهان</h3>
+                           <div class="flex gap-2 mt-1">
+                               <span class="text-xs bg-orange-500/20 text-orange-400 px-2 py-1 rounded">اکونومی</span>
+                               <span class="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">سیستمی</span>
+                           </div>
+                       </div>
+                    </div>
+                    <div class="flex items-center gap-8 font-montserrat">
+                        <div class="text-center"><div class="text-2xl font-bold">08:30</div><div class="text-sm text-gray-400">THR</div></div>
+                        <div class="flex flex-col items-center w-32">
+                            <span class="text-xs text-gray-400 mb-1">3h 15m</span>
+                            <div class="w-full h-[2px] bg-slate-600 relative">
+                                <i data-lucide="plane" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-orange-500 rotate-180 bg-slate-800 p-[2px] rounded-full w-5 h-5"></i>
+                            </div>
+                        </div>
+                        <div class="text-center"><div class="text-2xl font-bold">11:45</div><div class="text-sm text-gray-400">IST</div></div>
+                    </div>
+                    <div class="flex flex-col items-end gap-2">
+                        <div class="text-3xl font-lalezar text-orange-400">۱۵,۶۰۰,۰۰۰ <span class="text-sm font-vazir text-gray-400">تومان</span></div>
+                        <button class="btn-gradient text-white px-8 py-2 rounded-xl font-lalezar hover:shadow-lg">انتخاب بلیط</button>
+                    </div>
+                </div>
+                 <!-- Card 2 -->
+                 <div class="bg-slate-800/80 backdrop-blur-md border border-white/10 rounded-3xl p-6 text-white hover:border-orange-500/50 transition-all shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div class="flex items-center gap-6">
+                       <div class="w-16 h-16 bg-white rounded-full p-2 flex items-center justify-center">
+                           <i data-lucide="plane" class="text-slate-900"></i>
+                       </div>
+                       <div>
+                           <h3 class="text-xl font-lalezar">ایران ایر</h3>
+                           <div class="flex gap-2 mt-1">
+                               <span class="text-xs bg-orange-500/20 text-orange-400 px-2 py-1 rounded">اکونومی</span>
+                           </div>
+                       </div>
+                    </div>
+                    <div class="flex items-center gap-8 font-montserrat">
+                        <div class="text-center"><div class="text-2xl font-bold">14:00</div><div class="text-sm text-gray-400">THR</div></div>
+                        <div class="flex flex-col items-center w-32">
+                            <span class="text-xs text-gray-400 mb-1">4h 00m</span>
+                            <div class="w-full h-[2px] bg-slate-600 relative">
+                                <i data-lucide="plane" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-orange-500 rotate-180 bg-slate-800 p-[2px] rounded-full w-5 h-5"></i>
+                            </div>
+                        </div>
+                        <div class="text-center"><div class="text-2xl font-bold">18:00</div><div class="text-sm text-gray-400">IST</div></div>
+                    </div>
+                    <div class="flex flex-col items-end gap-2">
+                        <div class="text-3xl font-lalezar text-orange-400">۱۴,۲۰۰,۰۰۰ <span class="text-sm font-vazir text-gray-400">تومان</span></div>
+                        <button class="btn-gradient text-white px-8 py-2 rounded-xl font-lalezar hover:shadow-lg">انتخاب بلیط</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Home Content (Promos) -->
+        <div id="home-promos" class="container mx-auto px-4 py-16 space-y-24">
+            <!-- Video Cards -->
+             <div>
+                <h2 class="text-4xl font-lalezar text-white mb-8 border-r-4 border-orange-500 pr-4">تجربه پرواز واقعی</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="relative group rounded-3xl overflow-hidden h-64 border border-white/10 shadow-2xl">
+                        <video class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" muted loop onmouseover="this.play()" onmouseout="this.pause()">
+                            <source src="https://cdn.coverr.co/videos/coverr-dubai-fountain-at-night-4545/1080p.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute bottom-4 right-4 text-white">
+                            <h3 class="font-lalezar text-xl">دبی</h3>
+                        </div>
+                    </div>
+                    <div class="relative group rounded-3xl overflow-hidden h-64 border border-white/10 shadow-2xl">
+                        <video class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" muted loop onmouseover="this.play()" onmouseout="this.pause()">
+                            <source src="https://cdn.coverr.co/videos/coverr-cloudy-sky-2765/1080p.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute bottom-4 right-4 text-white">
+                            <h3 class="font-lalezar text-xl">آسمان</h3>
+                        </div>
+                    </div>
+                    <div class="relative group rounded-3xl overflow-hidden h-64 border border-white/10 shadow-2xl">
+                        <video class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" muted loop onmouseover="this.play()" onmouseout="this.pause()">
+                            <source src="https://cdn.coverr.co/videos/coverr-people-at-the-airport-4537/1080p.mp4" type="video/mp4">
+                        </video>
+                        <div class="absolute bottom-4 right-4 text-white">
+                            <h3 class="font-lalezar text-xl">فرودگاه</h3>
+                        </div>
+                    </div>
+                </div>
+             </div>
+
+             <!-- Destinations -->
+             <div>
+                <h2 class="text-4xl font-lalezar text-white border-r-4 border-pink-500 pr-4 mb-8">محبوب‌ترین مقاصد جهان</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="group relative h-96 rounded-[2rem] overflow-hidden cursor-pointer shadow-lg border border-white/5">
+                        <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=600" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                        <div class="absolute bottom-0 w-full p-6 text-white bg-gradient-to-t from-black/90 to-transparent">
+                            <h3 class="text-3xl font-lalezar">پاریس</h3>
+                            <p class="text-yellow-400 font-lalezar text-xl">۲۰,۰۰۰,۰۰۰ <span class="text-xs">تومان</span></p>
+                        </div>
+                    </div>
+                    <div class="group relative h-96 rounded-[2rem] overflow-hidden cursor-pointer shadow-lg border border-white/5">
+                        <img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=600" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                        <div class="absolute bottom-0 w-full p-6 text-white bg-gradient-to-t from-black/90 to-transparent">
+                            <h3 class="text-3xl font-lalezar">بالی</h3>
+                            <p class="text-yellow-400 font-lalezar text-xl">۳۵,۰۰۰,۰۰۰ <span class="text-xs">تومان</span></p>
+                        </div>
+                    </div>
+                    <div class="group relative h-96 rounded-[2rem] overflow-hidden cursor-pointer shadow-lg border border-white/5">
+                        <img src="https://images.unsplash.com/photo-1613395877344-13d4c79e4284?q=80&w=600" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                        <div class="absolute bottom-0 w-full p-6 text-white bg-gradient-to-t from-black/90 to-transparent">
+                            <h3 class="text-3xl font-lalezar">یونان</h3>
+                            <p class="text-yellow-400 font-lalezar text-xl">۴۲,۰۰۰,۰۰۰ <span class="text-xs">تومان</span></p>
+                        </div>
+                    </div>
+                    <div class="group relative h-96 rounded-[2rem] overflow-hidden cursor-pointer shadow-lg border border-white/5">
+                        <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=600" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                        <div class="absolute bottom-0 w-full p-6 text-white bg-gradient-to-t from-black/90 to-transparent">
+                            <h3 class="text-3xl font-lalezar">توکیو</h3>
+                            <p class="text-yellow-400 font-lalezar text-xl">۵۰,۰۰۰,۰۰۰ <span class="text-xs">تومان</span></p>
+                        </div>
+                    </div>
+                </div>
+             </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-black/90 text-white pt-20 pb-8 border-t border-white/10 relative overflow-hidden mt-20">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600"></div>
+            <div class="container mx-auto px-4 relative z-10">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
+                            <i data-lucide="plane" class="text-black transform -rotate-3"></i>
+                        </div>
+                        <div>
+                            <span class="text-3xl font-lalezar block">پرسیس پرواز</span>
+                            <span class="text-sm font-vazir text-gray-400">با مدیریت زابد رسولی</span>
+                        </div>
+                    </div>
+                    <div class="text-left font-montserrat text-gray-400 flex flex-col items-end">
+                        <p>Chabahar, Tohid Blvd, Persis Parvaz Agency</p>
+                        <p class="text-orange-400 mb-2">+98 915 547 214</p>
+                        <a href="https://wa.me/989155457214" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-green-400 hover:text-green-300 transition-colors bg-green-500/10 px-4 py-2 rounded-xl border border-green-500/20 hover:bg-green-500/20">
+                           <span class="font-vazir text-sm">ارتباط مستقیم با مدیریت (واتساپ)</span>
+                           <i data-lucide="phone"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-vazir text-gray-500">
+                    <p>تمامی حقوق برای پرسیس پرواز محفوظ است © ۱۴۰۳</p>
+                    <div class="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full border border-white/5">
+                        <span>ساخته شده توسط</span>
+                        <span class="text-orange-400 font-bold">عبدالناصر نورزهی</span>
+                        <span>| طراح و برنامه نویس افغان</span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // 1. Init Icons
+        lucide.createIcons();
+
+        // 2. JS Logic
+        window.onload = function() {
+            // Intro Animation Sequence
+            // Intro clouds generation
+            const cloudsContainer = document.getElementById('clouds-container');
+            for(let i=0; i<8; i++) {
+                const cloud = document.createElement('div');
+                cloud.className = 'speed-cloud';
+                cloud.style.width = Math.random() * 400 + 200 + 'px';
+                cloud.style.height = Math.random() * 20 + 2 + 'px';
+                cloud.style.top = Math.random() * 100 + '%';
+                cloud.style.opacity = Math.random() * 0.5 + 0.1;
+                cloud.style.animationDuration = Math.random() * 1 + 0.5 + 's';
+                cloud.style.animationDelay = -Math.random() + 's';
+                cloudsContainer.appendChild(cloud);
+            }
+
+            // Home particles
+            const particlesContainer = document.getElementById('particles-container');
+            for(let i=0; i<20; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDelay = Math.random() * 5 + 's';
+                p.style.animationDuration = 5 + Math.random() * 10 + 's';
+                particlesContainer.appendChild(p);
+            }
+
+            // Switch from Intro to Main after 3.5s
+            setTimeout(() => {
+                document.getElementById('intro-screen').classList.add('hide');
+                const appContent = document.getElementById('app-content');
+                appContent.style.opacity = '1';
+                // Trigger play on hero video just in case
+                const vid = document.querySelector('video');
+                if(vid) vid.play();
+            }, 3500);
+        };
+
+        function startSearch(e) {
+            e.preventDefault();
+            const origin = document.getElementById('input-origin').value;
+            const dest = document.getElementById('input-dest').value;
+            
+            if(!origin || !dest) {
+                alert('لطفا مبدا و مقصد را وارد کنید');
+                return;
+            }
+
+            // 1. Show Globe
+            document.getElementById('globe-origin').innerText = origin;
+            document.getElementById('globe-dest').innerText = dest;
+            
+            const globe = document.getElementById('globe-overlay');
+            globe.classList.remove('hide');
+            globe.classList.add('show');
+
+            // 2. Wait 4s then show results
+            setTimeout(() => {
+                globe.classList.remove('show');
+                globe.classList.add('hide');
+
+                // Hide Hero & Promos
+                document.getElementById('hero-section').classList.add('hide');
+                document.getElementById('home-promos').classList.add('hide');
+
+                // Show Results
+                const resSec = document.getElementById('results-section');
+                resSec.classList.remove('hide');
+                resSec.classList.add('show', 'fade-in');
+
+                document.getElementById('res-origin').innerText = origin;
+                document.getElementById('res-dest').innerText = dest;
+
+                lucide.createIcons(); // Refresh icons for new section
+            }, 4000);
+        }
+
+        function resetSearch() {
+            document.getElementById('results-section').classList.remove('show');
+            document.getElementById('results-section').classList.add('hide');
+
+            document.getElementById('hero-section').classList.remove('hide');
+            document.getElementById('home-promos').classList.remove('hide');
+
+            document.getElementById('input-origin').value = '';
+            document.getElementById('input-dest').value = '';
+        }
+    </script>
+</body>
+</html>
+
