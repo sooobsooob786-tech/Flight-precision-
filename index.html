@@ -14,6 +14,12 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Montserrat:wght@400;600;700&family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 
+    <!-- Persian Datepicker Dependencies -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+    <script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+    <script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+
     <style>
         /* Custom Fonts */
         .font-lalezar { font-family: 'Lalezar', cursive; }
@@ -126,9 +132,49 @@
           50% { opacity: 1; }
           100% { bottom: 100%; transform: translateX(-20px); opacity: 0; }
         }
+
+        /* Datepicker Customization */
+        .datepicker-plot-area {
+            z-index: 99999 !important;
+            font-family: 'Vazirmatn', sans-serif !important;
+            border-radius: 15px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+        }
+        .datepicker-plot-area .datepicker-day-view .table-days td.selected span {
+            background-color: #f97316 !important; /* Orange-500 */
+            text-shadow: none !important;
+        }
+        .datepicker-plot-area .datepicker-day-view .table-days td span {
+            font-weight: bold !important;
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-800 font-vazir overflow-x-hidden">
+
+    <!-- Pre-define Data List for Cities -->
+    <datalist id="cities-list">
+        <!-- ایران -->
+        <option value="تهران (THR)">
+        <option value="زاهدان (ZAH)">
+        <option value="کنارک / چابهار (ZBR)">
+        <option value="مشهد (MHD)">
+        <option value="شیراز (SYZ)">
+        <option value="اصفهان (IFN)">
+        <option value="کیش (KIH)">
+        <option value="قشم (GSM)">
+        <option value="بندرعباس (BND)">
+        <!-- جهان -->
+        <option value="استانبول (IST)">
+        <option value="دبی (DXB)">
+        <option value="نجف (NJF)">
+        <option value="پاریس (CDG)">
+        <option value="لندن (LHR)">
+        <option value="تورنتو (YYZ)">
+        <option value="فرانکفورت (FRA)">
+        <option value="توکیو (HND)">
+        <option value="بانکوک (BKK)">
+        <option value="کوالالامپور (KUL)">
+    </datalist>
 
     <!-- 1. INTRO SCREEN -->
     <div id="intro-screen" class="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden">
@@ -181,9 +227,10 @@
                     <i data-lucide="plane" class="text-white transform -rotate-3"></i>
                 </div>
                 <div class="flex flex-col">
-                    <h1 class="text-2xl font-lalezar tracking-wide drop-shadow-md text-white">
-                        پرسیس پرواز <span class="text-sm align-middle opacity-90 text-orange-200 font-vazir">با مدیریت زابد رسولی</span>
+                    <h1 class="text-2xl font-lalezar tracking-wide drop-shadow-md text-white leading-none">
+                        پرسیس پرواز
                     </h1>
+                    <span class="text-xs opacity-90 text-orange-200 font-vazir mt-1">با مدیریت زابد رسولی</span>
                 </div>
             </div>
 
@@ -211,8 +258,9 @@
             <!-- Video Background -->
             <div class="absolute inset-0 z-0">
                 <div class="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-purple-900/40 to-slate-950 z-10"></div>
-                <video autoplay loop muted playsinline class="w-full h-full object-cover scale-105">
-                    <source src="https://cdn.coverr.co/videos/coverr-flying-above-clouds-5323/1080p.mp4" type="video/mp4">
+                <!-- Poster added for fallback image -->
+                <video autoplay loop muted playsinline poster="https://s6.uupload.ir/files/1ef210143bc559dc38f8e04a8f550185_2qt1.jpg" class="w-full h-full object-cover scale-105">
+                    <source src="https://uploadkon.ir/uploads/3e7e24_25bfe20f8e58f3c5e797994caf22e39381.mp4" type="video/mp4">
                 </video>
                 <!-- Particles -->
                 <div id="particles-container" class="absolute inset-0 z-10 pointer-events-none"></div>
@@ -223,10 +271,10 @@
                 <div class="w-full max-w-6xl glass-morphism rounded-[2.5rem] p-6 md:p-10 shadow-2xl border border-white/20 backdrop-blur-xl">
                     <!-- Tabs -->
                     <div class="flex justify-center md:justify-start gap-4 mb-8">
-                        <button class="flex items-center gap-2 px-6 py-3 rounded-2xl font-lalezar text-xl bg-white text-indigo-900 shadow-lg scale-105 transition-all">
+                        <button id="btn-flight" onclick="showFlightMode()" class="flex items-center gap-2 px-6 py-3 rounded-2xl font-lalezar text-xl bg-white text-indigo-900 shadow-lg scale-105 transition-all">
                             <i data-lucide="plane"></i> پرواز
                         </button>
-                        <button class="flex items-center gap-2 px-6 py-3 rounded-2xl font-lalezar text-xl text-white hover:bg-white/10 transition-all">
+                        <button id="btn-hotel" onclick="scrollToHotels()" class="flex items-center gap-2 px-6 py-3 rounded-2xl font-lalezar text-xl text-white hover:bg-white/10 transition-all">
                             <i data-lucide="calendar"></i> هتل
                         </button>
                     </div>
@@ -238,7 +286,7 @@
                             <label class="block text-indigo-100 text-sm mb-2 font-bold">مبدا (از کجا؟)</label>
                             <div class="relative flex items-center bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl transition-all">
                                 <i data-lucide="map-pin" class="text-orange-400 absolute right-3"></i>
-                                <input type="text" id="input-origin" placeholder="تهران (THR)" class="bg-transparent w-full py-4 pr-12 pl-4 outline-none text-white placeholder-white/50 text-lg rounded-2xl" required>
+                                <input type="text" id="input-origin" list="cities-list" placeholder="تهران - زاهدان - کنارک" class="bg-transparent w-full py-4 pr-12 pl-4 outline-none text-white placeholder-white/50 text-lg rounded-2xl" required>
                             </div>
                         </div>
 
@@ -254,26 +302,32 @@
                             <label class="block text-indigo-100 text-sm mb-2 font-bold">مقصد (به کجا؟)</label>
                             <div class="relative flex items-center bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl transition-all">
                                 <i data-lucide="globe" class="text-pink-400 absolute right-3"></i>
-                                <input type="text" id="input-dest" placeholder="استانبول (IST)" class="bg-transparent w-full py-4 pr-12 pl-4 outline-none text-white placeholder-white/50 text-lg rounded-2xl" required>
+                                <input type="text" id="input-dest" list="cities-list" placeholder="مشهد، استانبول، دبی..." class="bg-transparent w-full py-4 pr-12 pl-4 outline-none text-white placeholder-white/50 text-lg rounded-2xl" required>
                             </div>
                         </div>
 
-                        <!-- Date -->
+                        <!-- Date (FIXED) -->
                         <div class="md:col-span-2 relative group">
                             <label class="block text-indigo-100 text-sm mb-2 font-bold">تاریخ</label>
                             <div class="relative flex items-center bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl transition-all">
-                                <i data-lucide="calendar" class="text-purple-400 absolute right-3"></i>
-                                <input type="text" placeholder="1403/--" class="bg-transparent w-full py-4 pr-12 pl-4 outline-none text-white placeholder-white/50 text-lg rounded-2xl font-montserrat">
+                                <i data-lucide="calendar" class="text-purple-400 absolute right-3 z-10"></i>
+                                <!-- Datepicker Input -->
+                                <input type="text" id="input-date" class="bg-transparent w-full py-4 pr-12 pl-4 outline-none text-white placeholder-white/50 text-lg rounded-2xl font-montserrat relative z-20 cursor-pointer" placeholder="انتخاب تاریخ">
                             </div>
                         </div>
 
-                         <!-- Class -->
+                         <!-- Class (UPDATED) -->
                          <div class="md:col-span-2 relative group">
                             <label class="block text-indigo-100 text-sm mb-2 font-bold">کلاس</label>
                             <div class="relative flex items-center bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl transition-all h-[62px]">
-                                <i data-lucide="star" class="text-yellow-400 absolute right-3"></i>
-                                <span class="pr-12 text-white">اکونومی</span>
-                                <i data-lucide="chevron-down" class="text-white absolute left-3"></i>
+                                <i data-lucide="star" class="text-yellow-400 absolute right-3 z-10"></i>
+                                <select class="w-full h-full bg-transparent text-white text-lg pr-12 pl-4 outline-none appearance-none cursor-pointer font-vazir relative z-20 focus:bg-slate-800/90 rounded-2xl">
+                                    <option value="economy" class="text-slate-800">اکونومی</option>
+                                    <option value="business" class="text-slate-800">بیزینس کلاس</option>
+                                    <option value="first" class="text-slate-800">فرست کلاس</option>
+                                    <option value="premium" class="text-slate-800">پریمیوم</option>
+                                </select>
+                                <i data-lucide="chevron-down" class="text-white absolute left-3 z-10"></i>
                             </div>
                         </div>
 
@@ -363,12 +417,12 @@
 
         <!-- Home Content (Promos) -->
         <div id="home-promos" class="container mx-auto px-4 py-16 space-y-24">
-            <!-- Video Cards -->
+            <!-- Video Cards (UPDATED WITH DUBAI AND SKY) -->
              <div>
                 <h2 class="text-4xl font-lalezar text-white mb-8 border-r-4 border-orange-500 pr-4">تجربه پرواز واقعی</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="relative group rounded-3xl overflow-hidden h-64 border border-white/10 shadow-2xl">
-                        <video class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" muted loop onmouseover="this.play()" onmouseout="this.pause()">
+                        <video class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" muted loop onmouseover="this.play()" onmouseout="this.pause()" poster="https://s6.uupload.ir/files/5ded036fdcf2125d5156617bc7cd8f64_hki.jpg">
                             <source src="https://cdn.coverr.co/videos/coverr-dubai-fountain-at-night-4545/1080p.mp4" type="video/mp4">
                         </video>
                         <div class="absolute bottom-4 right-4 text-white">
@@ -376,7 +430,7 @@
                         </div>
                     </div>
                     <div class="relative group rounded-3xl overflow-hidden h-64 border border-white/10 shadow-2xl">
-                        <video class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" muted loop onmouseover="this.play()" onmouseout="this.pause()">
+                        <video class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" muted loop onmouseover="this.play()" onmouseout="this.pause()" poster="https://s6.uupload.ir/files/1ef210143bc559dc38f8e04a8f550185_2qt1.jpg">
                             <source src="https://cdn.coverr.co/videos/coverr-cloudy-sky-2765/1080p.mp4" type="video/mp4">
                         </video>
                         <div class="absolute bottom-4 right-4 text-white">
@@ -384,7 +438,7 @@
                         </div>
                     </div>
                     <div class="relative group rounded-3xl overflow-hidden h-64 border border-white/10 shadow-2xl">
-                        <video class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" muted loop onmouseover="this.play()" onmouseout="this.pause()">
+                        <video class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" muted loop onmouseover="this.play()" onmouseout="this.pause()" poster="https://images.unsplash.com/photo-1569154941061-e231b4725ef1?q=80&w=600">
                             <source src="https://cdn.coverr.co/videos/coverr-people-at-the-airport-4537/1080p.mp4" type="video/mp4">
                         </video>
                         <div class="absolute bottom-4 right-4 text-white">
@@ -394,36 +448,79 @@
                 </div>
              </div>
 
-             <!-- Destinations -->
+             <!-- Destinations (UPDATED WITH PARIS) -->
              <div>
                 <h2 class="text-4xl font-lalezar text-white border-r-4 border-pink-500 pr-4 mb-8">محبوب‌ترین مقاصد جهان</h2>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div class="group relative h-96 rounded-[2rem] overflow-hidden cursor-pointer shadow-lg border border-white/5">
-                        <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=600" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                        <img src="https://s6.uupload.ir/files/c90e3cbf9ac4ac6f83c330357e93e0fa_n944.jpg" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                         <div class="absolute bottom-0 w-full p-6 text-white bg-gradient-to-t from-black/90 to-transparent">
                             <h3 class="text-3xl font-lalezar">پاریس</h3>
                             <p class="text-yellow-400 font-lalezar text-xl">۲۰,۰۰۰,۰۰۰ <span class="text-xs">تومان</span></p>
                         </div>
                     </div>
                     <div class="group relative h-96 rounded-[2rem] overflow-hidden cursor-pointer shadow-lg border border-white/5">
-                        <img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=600" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                        <img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=800" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                         <div class="absolute bottom-0 w-full p-6 text-white bg-gradient-to-t from-black/90 to-transparent">
                             <h3 class="text-3xl font-lalezar">بالی</h3>
                             <p class="text-yellow-400 font-lalezar text-xl">۳۵,۰۰۰,۰۰۰ <span class="text-xs">تومان</span></p>
                         </div>
                     </div>
                     <div class="group relative h-96 rounded-[2rem] overflow-hidden cursor-pointer shadow-lg border border-white/5">
-                        <img src="https://images.unsplash.com/photo-1613395877344-13d4c79e4284?q=80&w=600" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                        <img src="https://images.unsplash.com/photo-1560969184-10fe8719e047?q=80&w=800" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                         <div class="absolute bottom-0 w-full p-6 text-white bg-gradient-to-t from-black/90 to-transparent">
-                            <h3 class="text-3xl font-lalezar">یونان</h3>
+                            <h3 class="text-3xl font-lalezar">برلین</h3>
                             <p class="text-yellow-400 font-lalezar text-xl">۴۲,۰۰۰,۰۰۰ <span class="text-xs">تومان</span></p>
                         </div>
                     </div>
                     <div class="group relative h-96 rounded-[2rem] overflow-hidden cursor-pointer shadow-lg border border-white/5">
-                        <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=600" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                        <img src="https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?q=80&w=800" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                         <div class="absolute bottom-0 w-full p-6 text-white bg-gradient-to-t from-black/90 to-transparent">
                             <h3 class="text-3xl font-lalezar">توکیو</h3>
                             <p class="text-yellow-400 font-lalezar text-xl">۵۰,۰۰۰,۰۰۰ <span class="text-xs">تومان</span></p>
+                        </div>
+                    </div>
+                </div>
+             </div>
+
+             <!-- NEW SECTION: Best Hotels -->
+             <div id="hotels-section">
+                <h2 class="text-4xl font-lalezar text-white border-r-4 border-purple-500 pr-4 mb-8">برترین هتل‌های جهان</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <!-- Hotel 1: Burj Al Arab -->
+                    <div class="group relative h-96 rounded-[2rem] overflow-hidden cursor-pointer shadow-lg border border-white/5">
+                        <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=800" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                        <div class="absolute bottom-0 w-full p-6 text-white bg-gradient-to-t from-black/90 to-transparent">
+                            <h3 class="text-2xl font-lalezar">برج العرب</h3>
+                            <p class="text-sm font-vazir opacity-80 mb-2">دبی، امارات</p>
+                            <p class="text-yellow-400 font-lalezar text-lg">شروع از ۵۰,۰۰۰,۰۰۰ <span class="text-xs">تومان</span></p>
+                        </div>
+                    </div>
+                    <!-- Hotel 2: Marina Bay Sands -->
+                    <div class="group relative h-96 rounded-[2rem] overflow-hidden cursor-pointer shadow-lg border border-white/5">
+                        <img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=800" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                        <div class="absolute bottom-0 w-full p-6 text-white bg-gradient-to-t from-black/90 to-transparent">
+                            <h3 class="text-2xl font-lalezar">مارینا بی سندز</h3>
+                            <p class="text-sm font-vazir opacity-80 mb-2">سنگاپور</p>
+                            <p class="text-yellow-400 font-lalezar text-lg">شروع از ۴۵,۰۰۰,۰۰۰ <span class="text-xs">تومان</span></p>
+                        </div>
+                    </div>
+                    <!-- Hotel 3: The Plaza -->
+                    <div class="group relative h-96 rounded-[2rem] overflow-hidden cursor-pointer shadow-lg border border-white/5">
+                        <img src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=800" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                        <div class="absolute bottom-0 w-full p-6 text-white bg-gradient-to-t from-black/90 to-transparent">
+                            <h3 class="text-2xl font-lalezar">د پلازا</h3>
+                            <p class="text-sm font-vazir opacity-80 mb-2">نیویورک، آمریکا</p>
+                            <p class="text-yellow-400 font-lalezar text-lg">شروع از ۶۰,۰۰۰,۰۰۰ <span class="text-xs">تومان</span></p>
+                        </div>
+                    </div>
+                    <!-- Hotel 4: Atlantis -->
+                    <div class="group relative h-96 rounded-[2rem] overflow-hidden cursor-pointer shadow-lg border border-white/5">
+                        <img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=800" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                        <div class="absolute bottom-0 w-full p-6 text-white bg-gradient-to-t from-black/90 to-transparent">
+                            <h3 class="text-2xl font-lalezar">آتلانتیس</h3>
+                            <p class="text-sm font-vazir opacity-80 mb-2">دبی، امارات</p>
+                            <p class="text-yellow-400 font-lalezar text-lg">شروع از ۴۰,۰۰۰,۰۰۰ <span class="text-xs">تومان</span></p>
                         </div>
                     </div>
                 </div>
@@ -439,9 +536,9 @@
                         <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
                             <i data-lucide="plane" class="text-black transform -rotate-3"></i>
                         </div>
-                        <div>
-                            <span class="text-3xl font-lalezar block">پرسیس پرواز</span>
-                            <span class="text-sm font-vazir text-gray-400">با مدیریت زابد رسولی</span>
+                        <div class="flex flex-col">
+                            <span class="text-3xl font-lalezar block leading-none">پرسیس پرواز</span>
+                            <span class="text-sm font-vazir text-gray-400 mt-1">با مدیریت زابد رسولی</span>
                         </div>
                     </div>
                     <div class="text-left font-montserrat text-gray-400 flex flex-col items-end">
@@ -472,6 +569,19 @@
 
         // 2. JS Logic
         window.onload = function() {
+            // Initialize Persian Datepicker with Toolbox for Gregorian Switch
+            $('#input-date').pDatepicker({
+                format: 'YYYY/MM/DD',
+                initialValue: false,
+                autoClose: true,
+                toolbox: {
+                    calendarSwitch: {
+                        enabled: true,
+                        format: 'MMMM'
+                    }
+                }
+            });
+
             // Intro Animation Sequence
             // Intro clouds generation
             const cloudsContainer = document.getElementById('clouds-container');
@@ -558,7 +668,35 @@
             document.getElementById('input-origin').value = '';
             document.getElementById('input-dest').value = '';
         }
+
+        function scrollToHotels() {
+            const section = document.getElementById('hotels-section');
+            if(section) {
+                section.scrollIntoView({ behavior: 'smooth' });
+                
+                // Toggle Active State
+                document.getElementById('btn-hotel').classList.remove('text-white', 'hover:bg-white/10');
+                document.getElementById('btn-hotel').classList.add('bg-white', 'text-indigo-900', 'shadow-lg', 'scale-105');
+                
+                document.getElementById('btn-flight').classList.add('text-white', 'hover:bg-white/10');
+                document.getElementById('btn-flight').classList.remove('bg-white', 'text-indigo-900', 'shadow-lg', 'scale-105');
+            }
+        }
+
+        function showFlightMode() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Toggle Active State
+            document.getElementById('btn-flight').classList.remove('text-white', 'hover:bg-white/10');
+            document.getElementById('btn-flight').classList.add('bg-white', 'text-indigo-900', 'shadow-lg', 'scale-105');
+            
+            document.getElementById('btn-hotel').classList.add('text-white', 'hover:bg-white/10');
+            document.getElementById('btn-hotel').classList.remove('bg-white', 'text-indigo-900', 'shadow-lg', 'scale-105');
+        }
     </script>
 </body>
 </html>
+
+
+
 
